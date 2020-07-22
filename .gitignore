@@ -127,3 +127,14 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Kaamiki ignore list
+.vscode/
+kaamiki/media/*.psd
+kaamiki/media/*.png
+*.bak
+*.bkp
+*.log
+misc*
+temp*
+test*
