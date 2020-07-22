@@ -1,0 +1,6 @@
+geopy
+psutil
+pywin32
+pywinauto
+uiautomation
+win10toast
