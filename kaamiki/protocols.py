@@ -61,7 +61,7 @@ class BabyMonitorProtocol(object, metaclass=Neo):
                 import pywinauto
                 from win32gui import GetForegroundWindow, GetWindowText
                 from win32process import GetWindowThreadProcessId
-                from win32api import GetFileVersionInfo
+                from win32api import GetFileVersionInfo as _info
 
                 self.log.debug("Windows packages loaded successfully.")
                 self._os = "nt"
@@ -123,13 +123,10 @@ class BabyMonitorProtocol(object, metaclass=Neo):
             # See https://stackoverflow.com/a/31119785 for using
             # windows resource table for parsing program name.
             try:
-                # TODO(xames3): Refactor code to look more Pythonic.
-                lang, page = GetFileVersionInfo(
-                    path, "\\VarFileInfo\\Translation")[0]
-                info = (
-                    u"\\StringFileInfo\\%04X%04X\\FileDescription" % (lang,
-                                                                      page))
-                program = GetFileVersionInfo(path, info)
+                lang, page = _info(path, "\\VarFileInfo\\Translation")[0]
+                addr = "%04X%04X" % (lang, page)
+                file = u"\\StringFileInfo\\{}\\FileDescription".format(addr)
+                program = _info(path, file)
             except NameError:
                 self.log.error(f"{self._name} could not resolve program name.")
                 window = None
@@ -182,7 +179,7 @@ class BabyMonitorProtocol(object, metaclass=Neo):
             return None, None
         # See https://stackoverflow.com/a/59917905 for fetching URL
         # from current chrome tab and for fetching URL from current
-        # firefox tab see https://stackoverflow.com/a/2598682
+        # firefox tab see https://stackoverflow.com/a/2598682.
         # NOTE(xames3): Firefox method has not been tested yet.
         try:
             # pyright: reportGeneralTypeIssues=false
