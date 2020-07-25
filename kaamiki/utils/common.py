@@ -28,12 +28,18 @@ from kaamiki.utils.logger import Neo, SilenceOfTheLogs
 log = SilenceOfTheLogs().log
 
 
-# TODO(xames3): Add docstring to the `CSVDataWriter` class.
 class CSVDataWriter(object, metaclass=Neo):
     """
     CSVDataWriter
+
+    As the name suggests speaks for itself, `CSVDataWriter` is a csv
+    file writer class which inherits singleton design pattern.
+    By inheriting singleton design, we are able to initialise only
+    one instance of this class for all csv writing operations.
+
+    This class also operates like a rotating file handler which rotates
+    csv files once they reach a certain size.
     """
-    # See https://stackoverflow.com/a/10896813 for more help.
 
     def __init__(self,
                  path: str,
@@ -42,6 +48,7 @@ class CSVDataWriter(object, metaclass=Neo):
                  delimiter: str = ",",
                  size: int = 100000) -> None:  # 1 MB
         """Instantiate class."""
+        # See https://stackoverflow.com/a/10896813 for more help.
         self._path = path
         self._mode = mode
         self._encoding = encoding
@@ -85,10 +92,10 @@ class CSVDataWriter(object, metaclass=Neo):
         # This ensure that the headers are written only once during the
         # file creation.
         if os.path.getsize(self._filename) == 0:
-            self.handler.write(self._delimiter.join([*headers, "\n"]))
+            self.handler.write(self._delimiter.join(headers) + "\n")
         # pyright: reportGeneralTypeIssues=false
         args = list(map(lambda xa: "" if xa is None else str(xa), args))
-        self.handler.write(self._delimiter.join([*args, "\n"]))
+        self.handler.write(self._delimiter.join(args) + "\n")
         self.handler.flush()
         self._rotate()
 
@@ -100,13 +107,13 @@ def network_available(host: str = '8.8.8.8',
     Returns the status of network connectivity via socket connection.
 
     Args:
-      host: Host IP address or Hostname of a webserver.
-      port: Port of the webserver.
-      timeout: Request timeout.
+        host: Host IP address or Hostname of a webserver.
+        port: Port of the webserver.
+        timeout: Request timeout.
 
     Note:
-      8.8.8.8 is public DNS for Google (google-public-dns-a.google.com)
-      which is accessible via TCP port 53.
+        8.8.8.8 or google-public-dns-a.google.com, is public DNS for
+        Google which is accessible via TCP port 53.
     """
     try:
         socket.setdefaulttimeout(timeout)
