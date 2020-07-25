@@ -33,13 +33,13 @@ if sys.version_info < (3,):
     quit()
 
 if sys.version_info < (3, 5):
-    print("Kaamiki supports minimum python 3.6 and above. Kindly upgrade your "
-          "python interpreter to a suitable version.")
+    print("Kaamiki supports minimum python 3.6 and above. Kindly upgrade "
+          "your python interpreter to a suitable version.")
     quit()
 
 if os.name == "nt" and sys.maxsize.bit_length() == 31:
-    print("32-bit Windows Python runtime is not supported. Please switch to "
-          "64-bit Python.")
+    print("32-bit Windows Python runtime is not supported. Please switch "
+          "to 64-bit Python.")
     quit()
 
 from setuptools import find_packages, setup
@@ -49,7 +49,7 @@ from kaamiki import _NAME
 # This version string is semver compatible & adheres to Semantic
 # Versioning Specification (SemVer) starting with version 0.1.
 # You can read more about it here: https://semver.org/spec/v2.0.0.html
-_VERSION = "1.0.0"
+_VERSION = "1.0.1"
 
 _DOCLINES = __doc__ if __doc__.count("\n") == 0 else __doc__.split("\n")
 
