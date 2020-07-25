@@ -22,8 +22,8 @@ import os
 _NAME = "kaamiki"
 
 # Raise an exception if the environment is not correctly configured
-# with platform-specific imports. All attempts to run Kaamiki will
-# fail gracefully.
+# with platform-specific imports. All attempts to run Kaamiki on an
+# incorrect environment will fail gracefully.
 if os.name == "nt":
     # Attempt to load Windows based python imports, so that we can
     # raise an actionable error message if they are not found.
@@ -41,10 +41,10 @@ if os.name == "nt":
     if missing:
         _missing = ", ".join(missing[:-2] + [" and ".join(missing[-2:])])
         _modules = " ".join(missing)
-        print("ImportError: Cannot import {} module(s).\nKaamiki requires "
-              "that these module(s) be installed in your python environment. "
-              "You can install them with `pip install {}`".format(_missing,
-                                                                  _modules))
+        print("ImportError: Cannot import {} module(s).\n"
+              "Kaamiki requires that these module(s) be installed "
+              "in your python environment. You can install them "
+              "with `pip install {}`".format(_missing, _modules))
         del missing
         quit()
 
