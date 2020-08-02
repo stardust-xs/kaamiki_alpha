@@ -100,7 +100,7 @@ class CSVDataWriter(object, metaclass=Neo):
         self._rotate()
 
 
-def network_available(host: str = '8.8.8.8',
+def network_available(host: str = "8.8.8.8",
                       port: int = 53,
                       timeout: float = 10.0) -> bool:
     """
