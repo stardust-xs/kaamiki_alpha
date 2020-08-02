@@ -17,6 +17,7 @@
 
 """Utility for logging all Kaamiki events."""
 
+import getpass
 import logging
 import os
 import sys
@@ -24,71 +25,89 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Any, Tuple
 
+USER = getpass.getuser().lower().replace(" ", "-")
+
 
 class Neo(type):
     """
-    Neo
+    A naive implementation of Singleton design pattern.
 
-    `Neo` is a Singleton class which follows something called as
-    `Singleton Design` pattern. The Singleton pattern is a design
-    pattern that restricts the instantiation of a class to one object.
+    Singleton is a creational design pattern, which ensures that
+    only one object of its kind exists and provides a single point
+    of access to it for any other code.
 
-    In simple terms, a singleton is something, which ensures that only
-    one object of its kind exists and provides a single point of access
-    to it.
+    The below is a non thread-safe implementation of a Singleton.
+
+    See https://stackoverflow.com/q/6760685 for more methods of
+    implementing singletons in code.
+
+    You can instantiate YourClass multiple times yet you would get
+    reference to same object:
+
+    >>> class YourClass(metaclass=Neo):
+    ...     pass
+
+    >>> singleton_obj1 = YourClass()
+    >>> singleton_obj2 = YourClass()
+    >>> singleton_obj1
+    <__main__.YourClass object at 0x7fc8f1948970>
+    >>> singleton_obj2
+    <__main__.YourClass object at 0x7fc8f1948970>
     """
+    # See https://refactoring.guru/design-patterns/singleton/python/example
+    # for a thread-safe implementation.
     _instances = {}
 
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:
-            cls._instances[cls] = super(Neo, cls).__call__(*args, **kwargs)
+            cls._instances[cls] = super().__call__(*args, **kwargs)
         return cls._instances[cls]
 
 
 class LogFormatter(logging.Formatter, metaclass=Neo):
     """
-    LogFormatter
+    Formatting logs gracefully.
 
-    As name suggests, `LogFormatter` is a formatter class for
-    formatting log files across various log levels. It implements a
-    clean & uniform way of logging the records across all logging
+    As name suggests, LogFormatter is a formatter class for
+    formatting logs across various log levels. It implements a
+    clean & uniform way of logging records across all logging
     levels including exceptions.
     """
 
     def __init__(self) -> None:
         """Instantiate class."""
-        self.timestamp_format = "%a %b %d, %Y %H:%M:%S"
-        self.log_format = ("%(asctime)s.%(msecs)03d  %(levelname)-8s  "
-                           "%(process)6d  {:>13}:%(lineno)04d %(message)s")
-        self.exc_format = "{0} caused due to {1} in {2}() on line {3}."
+        self._timestamp_format = "%a %b %d, %Y %H:%M:%S"
+        self._log_format = ("%(asctime)s.%(msecs)03d %(levelname)8s "
+                            "[%(process)07d] {:>28}:%(lineno)04d %(message)s")
+        self._exc_format = "{0} caused due to {1} in {2}() on line {3}."
 
     def formatException(self, exc_info: Tuple[Any, ...]) -> str:
         """Format traceback message into string representation."""
-        return repr(super(LogFormatter, self).formatException(exc_info))
+        return repr(super().formatException(exc_info))
 
     def format(self, record: logging.LogRecord) -> str:
         """Format output log message."""
-        # Minify longer file names with an ellipsis while logging.
-        # This will ensure that the file names stay consistent
+        # Shorten longer module names with an ellipsis while logging.
+        # This will ensure that the module names stay consistent
         # throughout the logs.
-        if len(record.filename[:-3]) < 10:
-            minified = record.filename
-        else:
-            minified = (record.filename[:10] +
-                        bool(record.filename[10:]) * "...")
+        module = os.path.relpath(record.pathname).replace("/" or "\\", ".")
 
-        formatted = logging.Formatter(self.log_format.format(minified),
-                                      self.timestamp_format).format(record)
+        if len(module[:-3]) < 25:
+            module = module
+        else:
+            module = module[:25] + bool(module[25:]) * "..."
+
+        formatted = logging.Formatter(self._log_format.format(module),
+                                      self._timestamp_format).format(record)
 
         if record.exc_text:
-            exc_msg = self.exc_format.format(
+            exc_msg = self._exc_format.format(
                 record.exc_info[1].__class__.__name__,
                 str(record.msg).lower(),
                 record.funcName,
                 record.exc_info[2].tb_lineno)
             raw = formatted.replace("\n", "")
-            raw = raw.replace(
-                str(record.exc_info[-2]), exc_msg).replace("ERR", "EXC")
+            raw = raw.replace(str(record.exc_info[-2]), exc_msg)
             formatted, _, _ = raw.partition("Traceback")
 
         return formatted
@@ -96,10 +115,10 @@ class LogFormatter(logging.Formatter, metaclass=Neo):
 
 class StreamFormatter(logging.StreamHandler, metaclass=Neo):
     """
-    StreamFormatter
+    Stream logs on terminal with singleton backend.
 
-    `StreamFormatter` is a traditional logging stream handler with
-    taste of `Singleton` design pattern.
+    StreamFormatter is a traditional logging stream handler with
+    taste of Singleton design pattern.
     """
 
     def __init__(self) -> None:
@@ -109,13 +128,15 @@ class StreamFormatter(logging.StreamHandler, metaclass=Neo):
 
 class ArchiveHandler(RotatingFileHandler, metaclass=Neo):
     """
-    ArchiveHandler
+    Backup logs which grow bigger in size.
 
-    An `ArchiveHandler` is a rotating file handler class which
+    ArchiveHandler is a rotating file handler class which
     creates an archive of the log to rollover once it reaches a
     predetermined size. When the log is about to be exceed the set
     size, the file is closed and a new log is silently opened for
-    logging. This class ensures that the file won't grow indefinitely.
+    logging.
+
+    This class ensures that the file won't grow indefinitely.
     """
 
     def __init__(self,
@@ -129,12 +150,12 @@ class ArchiveHandler(RotatingFileHandler, metaclass=Neo):
         Instantiate class.
 
         Args:
-          name: Name of the log file.
-          mode: Log file writing mode.
-          size: Maximum file size limit for backup.
-          backups: Total number of backup.
-          encoding: File encoding.
-          delay: Delay for backup.
+            name: Name of the log file.
+            mode: Log file writing mode.
+            size: Maximum file size limit for backup.
+            backups: Total number of backup.
+            encoding: File encoding.
+            delay: Delay for backup.
         """
         self._count = 0
         super().__init__(filename=name,
@@ -158,12 +179,12 @@ class ArchiveHandler(RotatingFileHandler, metaclass=Neo):
 
 class SilenceOfTheLogs(object):
     """
-    SilenceOfTheLogs
+    Log all Kaamiki events silently.
 
-    `SilenceOfTheLogs` is a custom logger which logs Kaamiki events
-    silently. This logger follows `Singleton` design pattern and is
-    equipped with RotatingFileHandler and custom formatters which
-    enables sequential archiving and clean log formatting espectively.
+    SilenceOfTheLogs is a custom logger which records Kaamiki events
+    silently. This logger is equipped with Rotating file handler and
+    a custom Log formatter which enables sequential archiving and
+    clean log formatting.
     """
 
     def __init__(self,
@@ -175,12 +196,16 @@ class SilenceOfTheLogs(object):
         Instantiate class.
 
         Args:
-          name: Name for log file.
-          level: Default logging level to log messages.
-          size: Maximum file size limit for backup.
-          backups: Total number of backup.
+            name: Name for log file.
+            level: Default logging level to log messages.
+            size: Maximum file size limit for backup.
+            backups: Total number of backup.
         """
-        self._temp = os.path.abspath(sys.modules["__main__"].__file__)
+        try:
+            self._temp = os.path.abspath(sys.modules["__main__"].__file__)
+        except AttributeError:
+            self._temp = "kaamiki.py"
+
         self._name = name.lower() if name else Path(self._temp.lower()).stem
         self._name = self._name.replace(" ", "-")
         self._level = level.upper()
@@ -189,28 +214,28 @@ class SilenceOfTheLogs(object):
         self._logger = logging.getLogger()
         self._logger.setLevel(self._level)
 
-        self._path = os.path.expanduser("~/.kaamiki/logs/")
+        self._path = os.path.expanduser(f"~/.kaamiki/{USER}/logs/")
 
         if not os.path.exists(self._path):
-            os.mkdir(self._path)
+            os.makedirs(self._path)
 
-        self._path = "".join([self._path, "{}.log"])
+        self._file = os.path.join(self._path, "".join([self._name, ".log"]))
         self._formatter = LogFormatter()
 
     @property
     def log(self) -> logging.Logger:
         """Log Kaamiki events."""
         # Archive the logs once their file size reaches 1 Mb.
-        # See `ArchiveHandler()` for more information. You can change
-        # the way archived logs are named using `ArchiveHandler()`.
-        file_handler = ArchiveHandler(self._path.format(self._name),
+        # See ArchiveHandler() for more information. You can change
+        # the way archived logs are named using ArchiveHandler().
+        file_handler = ArchiveHandler(self._file,
                                       size=self._size,
                                       backups=self._backups)
         file_handler.setFormatter(self._formatter)
         self._logger.addHandler(file_handler)
         # Stream Handler will print duplicate logs if the same instance
         # of the log object is called multiple times. Unlike file
-        # handler, stream handler doesn't support `Singleton` pattern.
+        # handler, stream handler doesn't support Singleton pattern.
         stream_handler = StreamFormatter()
         stream_handler.setFormatter(self._formatter)
         self._logger.addHandler(stream_handler)
