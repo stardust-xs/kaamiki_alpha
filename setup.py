@@ -75,7 +75,7 @@ setup(
     url="https://github.com/kaamiki/kaamiki",
     author="XAMES3",
     author_email="xames3.developer@gmail.com",
-    maintainer_email="xames3.developer@gmail.com",
+    maintainer_email="xames3.kaamiki@gmail.com",
     # PyPI package information.
     classifiers=[
         "Development Status :: 4 - Beta",
