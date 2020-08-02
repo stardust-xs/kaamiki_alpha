@@ -83,6 +83,7 @@ class CSVDataWriter(object, metaclass=Neo):
     def _rotate(self) -> None:
         """Rotates file once it reaches a particular size."""
         if os.path.getsize(self._filename) > self._size:
+            log.debug("Rotating csv file...")
             self._close()
             self._count += 1
             self._open()
