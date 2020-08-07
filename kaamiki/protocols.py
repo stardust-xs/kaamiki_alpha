@@ -17,21 +17,22 @@
 
 """Collection of protocols which run in the background."""
 
-import getpass
 import os
 import random
 import re
 import time
+import uuid
 from subprocess import PIPE, Popen
 from typing import Optional, Tuple
 
 from kaamiki.utils.common import CSVDataWriter, now, seconds_to_datetime
-from kaamiki.utils.logger import Neo, SilenceOfTheLogs
+from kaamiki.utils.logger import USER, Neo, SilenceOfTheLogs
 
 logger = SilenceOfTheLogs
 
 _random = random.Random()
 _random.seed(69)
+_user_id = uuid.UUID(int=_random.getrandbits(128))
 
 _BLINK = 1.0
 _NAP = 10.0
@@ -79,15 +80,13 @@ class BabyMonitorProtocol(object, metaclass=Neo):
         else:
             self._os = "posix"
 
-        self._user = getpass.getuser().lower().replace(" ", "-")
-        self._path = os.path.expanduser(f"~/.kaamiki/{self._user}"
-                                        "/data/activities/")
+        self._path = os.path.expanduser(f"~/.kaamiki/{USER}/data/activities/")
 
         if not os.path.exists(self._path):
             self.log.debug("Creating base directory for saving user data...")
             os.makedirs(self._path)
 
-        self._csv = CSVDataWriter(os.path.join(self._path, f"{uuid4}.csv"))
+        self._csv = CSVDataWriter(os.path.join(self._path, f"{_user_id}.csv"))
         self._headers = ["window", "program", "url", "domain", "started",
                          "stopped", "spent", "days", "hours", "minutes",
                          "seconds"]
@@ -219,7 +218,7 @@ class BabyMonitorProtocol(object, metaclass=Neo):
         """Activate Baby Monitor protocol."""
         self._window, self._program = None, None
         url, self._url, domain, self._domain = None, None, None, None
-        self.log.info(f"{self._name} started tracking {self._user}.")
+        self.log.info(f"{self._name} started tracking {USER}...")
         # We keep the protocol running irrespective of the exceptions.
         # This is ensured by suspending the protocol service for 10
         # seconds.
