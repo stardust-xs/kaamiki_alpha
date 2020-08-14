@@ -129,7 +129,6 @@ dmypy.json
 .pyre/
 
 # Kaamiki ignore list
-.vscode/
 kaamiki/media/*.psd
 kaamiki/media/*.png
 *.bak

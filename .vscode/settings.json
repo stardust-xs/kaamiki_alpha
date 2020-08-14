@@ -1,0 +1,75 @@
+{
+    "breadcrumbs.enabled": false,
+    "code-runner.executorMap": {
+        "python": "$pythonPath -u $fullFileName"
+    },
+    "code-runner.clearPreviousOutput": true,
+    "code-runner.showExecutionMessage": false,
+    "code-runner.ignoreSelection": true,
+    "code-runner.saveFileBeforeRun": true,
+    "diffEditor.renderSideBySide": true,
+    "editor.acceptSuggestionOnEnter": "off",
+    "editor.cursorStyle": "line",
+    "editor.cursorBlinking": "smooth",
+    "editor.formatOnPaste": true,
+    "editor.formatOnSave": true,
+    "editor.fontLigatures": true,
+    "editor.suggestSelection": "first",
+    "editor.snippetSuggestions": "top",
+    "editor.trimAutoWhitespace": true,
+    "editor.minimap.enabled": false,
+    "editor.wordWrap": "off",
+    "files.autoSave": "afterDelay",
+    "files.autoSaveDelay": 250,
+    "files.trimFinalNewlines": true,
+    "files.exclude": {
+        "**/.git": true,
+        "**/tmp": true,
+        "**/*.pyc": true,
+        "**/*.asset-cache": true,
+        "**/*.cache": true,
+        "**/__pycache__": true,
+        "**/.pytest_cache": true,
+        "**/*.egg-info": true,
+    },
+    "git.autofetch": true,
+    "python.pythonPath": "/mnt/hdd/development/venv/kaamiki/bin/python",
+    "python.linting.pylintEnabled": false,
+    "python.linting.pycodestyleEnabled": true,
+    "python.linting.enabled": true,
+    "python.formatting.provider": "autopep8",
+    "python.linting.pylintArgs": [
+        "--generate-members"
+    ],
+    "python.linting.pycodestyleArgs": [
+        "--ignore=W605,E111"
+    ],
+    "[markdown]": {
+        "editor.quickSuggestions": false,
+        "editor.insertSpaces": false,
+    },
+    "[plaintext]": {
+        "editor.quickSuggestions": false,
+    },
+    "[python]": {
+        "editor.detectIndentation": false,
+        "editor.insertSpaces": true,
+        "editor.rulers": [
+            72,
+            79
+        ],
+        "editor.tabSize": 4,
+        "editor.wordWrapColumn": 79,
+        "editor.wordWrap": "wordWrapColumn",
+        "editor.defaultFormatter": "ms-python.python",
+    },
+    "workbench.colorTheme": "Monokai",
+    "workbench.iconTheme": "material-icon-theme",
+    "explorer.confirmDelete": false,
+    "python.languageServer": "Jedi",
+    "files.associations": {
+        "*.extension": "language",
+    },
+    "explorer.confirmDragAndDrop": false,
+    "editor.codeActionsOnSave": {},
+}
