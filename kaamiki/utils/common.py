@@ -72,12 +72,12 @@ class CSVDataWriter(object, metaclass=Neo):
         return f"{self._path[:-4]}-{self._count:>03}.csv"
 
     def _open(self) -> None:
-        """Open CSV file for writing."""
+        """Opens CSV file for writing."""
         self.handler = open(self._filename, self._mode,
                             encoding=self._encoding)
 
     def _close(self) -> None:
-        """Close CSV file."""
+        """Closes CSV file."""
         self.handler.close()
 
     def _rotate(self) -> None:
@@ -89,7 +89,7 @@ class CSVDataWriter(object, metaclass=Neo):
             self._open()
 
     def write(self, headers: Sequence[Any], *args: Sequence[Any]) -> None:
-        """Write data to a CSV file."""
+        """Writes data to a CSV file."""
         # This ensure that the headers are written only once during the
         # file creation.
         if os.path.getsize(self._filename) == 0:
