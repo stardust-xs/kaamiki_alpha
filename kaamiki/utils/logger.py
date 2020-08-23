@@ -21,9 +21,13 @@ import getpass
 import logging
 import os
 import sys
+from distutils.sysconfig import get_python_lib
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from typing import Any, Tuple
+from types import TracebackType
+from typing import Tuple
+
+_SysExcInfoType = Tuple[type, BaseException, TracebackType]
 
 USER = getpass.getuser().lower().replace(" ", "-")
 
@@ -64,6 +68,20 @@ class Neo(type):
         return cls._instances[cls]
 
 
+class ModulePath(object):
+    """
+    Resolves module path.
+    """
+    def __init__(self, path: str) -> None:
+        self._path = path
+
+    @property
+    def resolve(self) -> str:
+        delimiter = "kaamiki" if "kaamiki" in self._path else get_python_lib()
+        module = self._path.partition(delimiter)[-1]
+        return os.path.splitext(module.replace("/" or "\\", "."))[0][1:]
+
+
 class LogFormatter(logging.Formatter, metaclass=Neo):
     """
     Formatting logs gracefully.
@@ -78,33 +96,33 @@ class LogFormatter(logging.Formatter, metaclass=Neo):
         """Instantiate class."""
         self._timestamp_format = "%a %b %d, %Y %H:%M:%S"
         self._log_format = ("%(asctime)s.%(msecs)03d %(levelname)8s "
-                            "[%(process)07d] {:>28}:%(lineno)04d %(message)s")
-        self._exc_format = "{0} caused due to {1} in {2}() on line {3}."
+                            "%(process)07d {:>30} : %(message)s")
+        self._exc_format = "{0} caused due to {1} {2}on line {3}."
 
-    def formatException(self, exc_info: Tuple[Any, ...]) -> str:
+    @staticmethod
+    def formatException(exc_info: _SysExcInfoType) -> str:
         """Format traceback message into string representation."""
         return repr(super().formatException(exc_info))
 
     def format(self, record: logging.LogRecord) -> str:
         """Format output log message."""
+        module = ModulePath(record.pathname).resolve
         # Shorten longer module names with an ellipsis while logging.
-        # This will ensure that the module names stay consistent
-        # throughout the logs.
-        module = os.path.relpath(record.pathname).replace("/" or "\\", ".")
-
-        if len(module[:-3]) < 25:
-            module = module
-        else:
-            module = module[:25] + bool(module[25:]) * "..."
+        # This ensures length of module name stay consistent in logs.
+        if len(module) > 30:
+            module = module[:27] + bool(module[27:]) * "..."
 
         formatted = logging.Formatter(self._log_format.format(module),
                                       self._timestamp_format).format(record)
+
+        function = record.funcName
+        function = f"in {function}() " if function != "<module>" else ""
 
         if record.exc_text:
             exc_msg = self._exc_format.format(
                 record.exc_info[1].__class__.__name__,
                 str(record.msg).lower(),
-                record.funcName,
+                function,
                 record.exc_info[2].tb_lineno)
             raw = formatted.replace("\n", "")
             raw = raw.replace(str(record.exc_info[-2]), exc_msg)
@@ -185,6 +203,15 @@ class SilenceOfTheLogs(object):
     silently. This logger is equipped with Rotating file handler and
     a custom Log formatter which enables sequential archiving and
     clean log formatting.
+
+    Example:
+    >>> from kaamiki.utils.logger import SilenceOfTheLogs
+    >>> log = SilenceOfTheLogs().log
+    >>> try:
+    ...     5 / 0
+    ... except Exception as error:
+    ...     log.exception(error)
+    Sun Aug 23, 2020 ...    ERROR 3571 ...: ZeroDivisionError caused ...
     """
 
     def __init__(self,
