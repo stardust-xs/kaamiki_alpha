@@ -33,7 +33,7 @@
         "**/*.egg-info": true,
     },
     "git.autofetch": true,
-    "python.pythonPath": "/mnt/hdd/development/venv/kaamiki/bin/python",
+    "python.pythonPath": "/mnt/hdd/development/universe/venv/bin/python",
     "python.linting.pylintEnabled": false,
     "python.linting.pycodestyleEnabled": true,
     "python.linting.enabled": true,
