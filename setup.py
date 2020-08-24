@@ -140,7 +140,7 @@ try:
         packages=find_packages(),
         platform=["Windows", "Linux", "Mac OS"],
     )
-except Exception as error:
+except Exception:
     print("An error occurred while installing Kaamiki.\nSee "
           "https://github.com/kaamiki/kaamiki for instructions on how "
           "install it on your system incase of any problems. If the "
