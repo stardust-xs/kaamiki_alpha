@@ -60,6 +60,17 @@ def use_readme() -> str:
         return file.read()
 
 
+def cook() -> None:
+    """Prepares the required directory structure."""
+    base = os.path.expanduser("~/.kaamiki/")
+    # Create base directory for logging and storing data or cache files.
+    if not os.path.exists(base):
+        os.mkdir(base)
+
+    with open(os.path.join(base, "update"), "w") as _file:
+        _file.write(f"installed_version={_VERSION}\ncheck_status=0")
+
+
 with open("requirements.txt", "r") as requirements:
     packages = [package.rstrip() for package in requirements]
     # Skip downloading packages meant for Windows when running on a
@@ -69,67 +80,71 @@ with open("requirements.txt", "r") as requirements:
         skip = ["psutil", "pywin32", "pypywin32", "pywinauto", "win10toast"]
         packages = [idx for idx in packages if idx not in skip]
 
-setup(
-    name=_NAME,
-    version=_VERSION,
-    url="https://github.com/kaamiki/kaamiki",
-    author="XAMES3",
-    author_email="xames3.developer@gmail.com",
-    maintainer_email="xames3.kaamiki@gmail.com",
-    # PyPI package information.
-    classifiers=[
-        "Development Status :: 4 - Beta",
-        "Environment :: MacOS X",
-        "Environment :: Win32 (MS Windows)",
-        "Environment :: X11 Applications",
-        "Environment :: X11 Applications :: Gnome",
-        "Intended Audience :: Developers",
-        "Intended Audience :: End Users/Desktop",
-        "Intended Audience :: Information Technology",
-        "Intended Audience :: Science/Research",
-        "License :: OSI Approved :: Apache Software License",
-        "Natural Language :: English",
-        "Operating System :: MacOS :: MacOS X",
-        "Operating System :: Microsoft :: Windows :: Windows 10",
-        "Operating System :: POSIX",
-        "Operating System :: POSIX :: Linux",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3 :: Only",
-        "Programming Language :: Python :: Implementation :: CPython",
-        "Programming Language :: Unix Shell",
-        "Topic :: Desktop Environment :: Gnome",
-        "Topic :: Home Automation",
-        "Topic :: Multimedia :: Graphics :: Capture :: Digital Camera",
-        "Topic :: Multimedia :: Video :: Capture",
-        "Topic :: Office/Business :: Scheduling",
-        "Topic :: Scientific/Engineering",
-        "Topic :: Scientific/Engineering :: Artificial Intelligence",
-        "Topic :: Scientific/Engineering :: Image Recognition",
-        "Topic :: Scientific/Engineering :: Information Analysis",
-        "Topic :: Scientific/Engineering :: Mathematics",
-        "Topic :: Software Development",
-        "Topic :: System :: Archiving",
-        "Topic :: System :: Monitoring",
-        "Topic :: System :: Networking :: Monitoring :: Hardware Watchdog",
-        "Topic :: System :: Networking :: Time Synchronization",
-        "Topic :: System :: Operating System Kernels :: Linux",
-    ],
-    license="Apache Software License 2.0",
-    description=" ".join(_DOCLINES[3:5]),
-    long_description=use_readme(),
-    long_description_content_type="text/markdown",
-    keywords="kaamiki python c++ machine learning pandas numpy cv2",
-    zip_safe=False,
-    install_requires=packages,
-    python_requires="~=3.6",
-    include_package_data=True,
-    packages=find_packages(),
-    platform=["Windows", "Linux", "Mac OS"],
-)
-
-_PATH = os.path.expanduser("~/.kaamiki/")
-# Create base directory for logging and storing data or cache files.
-if not os.path.exists(_PATH):
-    os.mkdir(_PATH)
+try:
+    setup(
+        name=_NAME,
+        version=_VERSION,
+        url="https://github.com/kaamiki/kaamiki",
+        author="XAMES3",
+        author_email="xames3.developer@gmail.com",
+        maintainer_email="xames3.kaamiki@gmail.com",
+        # PyPI package information.
+        classifiers=[
+            "Development Status :: 4 - Beta",
+            "Environment :: MacOS X",
+            "Environment :: Win32 (MS Windows)",
+            "Environment :: X11 Applications",
+            "Environment :: X11 Applications :: Gnome",
+            "Intended Audience :: Developers",
+            "Intended Audience :: End Users/Desktop",
+            "Intended Audience :: Information Technology",
+            "Intended Audience :: Science/Research",
+            "License :: OSI Approved :: Apache Software License",
+            "Natural Language :: English",
+            "Operating System :: MacOS :: MacOS X",
+            "Operating System :: Microsoft :: Windows :: Windows 10",
+            "Operating System :: POSIX",
+            "Operating System :: POSIX :: Linux",
+            "Programming Language :: Python :: 3.6",
+            "Programming Language :: Python :: 3.7",
+            "Programming Language :: Python :: 3.8",
+            "Programming Language :: Python :: 3 :: Only",
+            "Programming Language :: Python :: Implementation :: CPython",
+            "Programming Language :: Unix Shell",
+            "Topic :: Desktop Environment :: Gnome",
+            "Topic :: Home Automation",
+            "Topic :: Multimedia :: Graphics :: Capture :: Digital Camera",
+            "Topic :: Multimedia :: Video :: Capture",
+            "Topic :: Office/Business :: Scheduling",
+            "Topic :: Scientific/Engineering",
+            "Topic :: Scientific/Engineering :: Artificial Intelligence",
+            "Topic :: Scientific/Engineering :: Image Recognition",
+            "Topic :: Scientific/Engineering :: Information Analysis",
+            "Topic :: Scientific/Engineering :: Mathematics",
+            "Topic :: Software Development",
+            "Topic :: System :: Archiving",
+            "Topic :: System :: Monitoring",
+            "Topic :: System :: Networking :: Monitoring :: Hardware Watchdog",
+            "Topic :: System :: Networking :: Time Synchronization",
+            "Topic :: System :: Operating System Kernels :: Linux",
+        ],
+        license="Apache Software License 2.0",
+        description=" ".join(_DOCLINES[3:5]),
+        long_description=use_readme(),
+        long_description_content_type="text/markdown",
+        keywords="kaamiki python c++ machine learning pandas numpy cv2",
+        zip_safe=False,
+        install_requires=packages,
+        python_requires="~=3.6",
+        include_package_data=True,
+        packages=find_packages(),
+        platform=["Windows", "Linux", "Mac OS"],
+    )
+except Exception as error:
+    print("An error occurred while installing Kaamiki.\nSee "
+          "https://github.com/kaamiki/kaamiki for instructions on how "
+          "install it on your system incase of any problems. If the "
+          "error still persists, please feel free to raise an issue "
+          "over here: https://github.com/kaamiki/kaamiki/issues.")
+else:
+    cook()
