@@ -60,17 +60,17 @@ def compare_version(package: str = "kaamiki") -> str:
         latest = latest if latest else current
 
         if parse_version(current) == parse_version(latest):
-            return ('You are using the latest version of '
-                    f'{package}, v{latest}')
+            return ("You are using the latest version of "
+                    f"{package}, v{latest}")
         elif parse_version(current) < parse_version(latest):
-            return ('You are using an older version of {}, v{}\nHowever, v{} '
-                    'is available for download. You should consider upgrading '
-                    'using "pip install --upgrade {}" command.').format(
+            return ("You are using an older version of {}, v{}\nHowever, v{} "
+                    "is available for download. You should consider upgrading "
+                    "using `pip install --upgrade {}` command.").format(
                         package, current, latest, package)
         else:
-            return ('You are using the development version of {}, v{}\nIf '
-                    'you want to roll back to the stable version consider '
-                    'downgrading using "pip install {}" command.').format(
+            return ("You are using the development version of {}, v{}\nIf "
+                    "you want to roll back to the stable version consider "
+                    "downgrading using `pip install {}` command.").format(
                         package, current, package)
     else:
         return ("No active internet connection is available at the moment. "

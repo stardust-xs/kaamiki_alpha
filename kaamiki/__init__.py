@@ -35,7 +35,6 @@ if os.name == "nt":
             import module
         except ImportError:
             missing.append(module)
-
     # See https://stackoverflow.com/a/19839338 for grammatical list
     # joining.
     if missing:
