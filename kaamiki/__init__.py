@@ -19,8 +19,6 @@
 
 import os
 
-_NAME = "kaamiki"
-
 # Raise an exception if the environment is not correctly configured
 # with platform-specific imports. All attempts to run Kaamiki on an
 # incorrect environment will fail gracefully.
