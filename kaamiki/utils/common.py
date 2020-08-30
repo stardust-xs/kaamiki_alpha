@@ -29,113 +29,112 @@ log = SilenceOfTheLogs().log
 
 
 class CSVDataWriter(object, metaclass=Neo):
-    """
-    CSVDataWriter
+  """
+  A singleton rotating CSV file writer.
 
-    As the name suggests speaks for itself, `CSVDataWriter` is a csv
-    file writer class which inherits singleton design pattern.
-    By inheriting singleton design, we are able to initialise only
-    one instance of this class for all csv writing operations.
+  As the name speaks for itself, `CSVDataWriter` is a csv writer
+  class which exercises singleton design pattern. By inheriting
+  singleton design, we are able to initialise only one instance
+  of this class for all csv writing operations.
+  The class implements a mechanism like rotating file handlers
+  which rotates csv files once they reach a certain size.
+  """
 
-    This class also operates like a rotating file handler which rotates
-    csv files once they reach a certain size.
-    """
+  def __init__(self,
+               path: str,
+               mode: str = "a",
+               encoding: str = "utf-8",
+               delimiter: str = ",",
+               size: int = 100000) -> None:  # 1 MB
+    """Instantiate class."""
+    # See https://stackoverflow.com/a/10896813 for more help.
+    self._path = path
+    self._mode = mode
+    self._encoding = encoding
+    self._delimiter = delimiter
+    self._size = size
+    # For accessing the last `numbered` file in a directory
+    # using glob see https://stackoverflow.com/a/17985613.
+    self._files = sorted(glob(f"{self._path[:-4]}*.csv"), reverse=True)
 
-    def __init__(self,
-                 path: str,
-                 mode: str = "a",
-                 encoding: str = "utf-8",
-                 delimiter: str = ",",
-                 size: int = 100000) -> None:  # 1 MB
-        """Instantiate class."""
-        # See https://stackoverflow.com/a/10896813 for more help.
-        self._path = path
-        self._mode = mode
-        self._encoding = encoding
-        self._delimiter = delimiter
-        self._size = size
-        # For accessing the last `numbered` file in a directory using
-        # glob see https://stackoverflow.com/a/17985613.
-        self._files = sorted(glob(f"{self._path[:-4]}*.csv"), reverse=True)
+    if self._files:
+      self._count = int(os.path.basename(self._files[0][-7:-4]))
+    else:
+      self._count = 1
 
-        if self._files:
-            self._count = int(os.path.basename(self._files[0][-7:-4]))
-        else:
-            self._count = 1
+    self._open()
+    self._rotate()
 
-        self._open()
-        self._rotate()
+  @property
+  def _filename(self) -> str:
+    """Return rotated CSV filename constructor."""
+    return f"{self._path[:-4]}-{self._count:>03}.csv"
 
-    @property
-    def _filename(self) -> str:
-        """Returns rotated CSV filename constructor."""
-        return f"{self._path[:-4]}-{self._count:>03}.csv"
+  def _open(self) -> None:
+    """Open CSV file for writing."""
+    self.handler = open(self._filename, self._mode, encoding=self._encoding)
 
-    def _open(self) -> None:
-        """Opens CSV file for writing."""
-        self.handler = open(self._filename, self._mode,
-                            encoding=self._encoding)
+  def _close(self) -> None:
+    """Close CSV file."""
+    self.handler.close()
 
-    def _close(self) -> None:
-        """Closes CSV file."""
-        self.handler.close()
+  def _rotate(self) -> None:
+    """Rotates file once it reaches a particular size."""
+    if os.path.getsize(self._filename) > self._size:
+      log.debug("Rotating csv file...")
+      self._close()
+      self._count += 1
+      self._open()
 
-    def _rotate(self) -> None:
-        """Rotates file once it reaches a particular size."""
-        if os.path.getsize(self._filename) > self._size:
-            log.debug("Rotating csv file...")
-            self._close()
-            self._count += 1
-            self._open()
-
-    def write(self, headers: Sequence[Any], *args: Sequence[Any]) -> None:
-        """Writes data to a CSV file."""
-        # This ensure that the headers are written only once during the
-        # file creation.
-        if os.path.getsize(self._filename) == 0:
-            self.handler.write(self._delimiter.join(headers) + "\n")
-        # pyright: reportGeneralTypeIssues=false
-        args = list(map(lambda xa: "" if xa is None else str(xa), args))
-        self.handler.write(self._delimiter.join(args) + "\n")
-        self.handler.flush()
-        self._rotate()
+  def write(self, headers: Sequence[Any], *args: Sequence[Any]) -> None:
+    """Write data to a CSV file."""
+    # This ensure that the headers are written only once.
+    if os.path.getsize(self._filename) == 0:
+      self.handler.write(self._delimiter.join(headers) + "\n")
+    # pyright: reportGeneralTypeIssues=false
+    args = list(map(lambda xa: "" if xa is None else str(xa), args))
+    self.handler.write(self._delimiter.join(args) + "\n")
+    self.handler.flush()
+    self._rotate()
 
 
-def network_available(host: str = "8.8.8.8",
-                      port: int = 53,
-                      timeout: float = 10.0) -> bool:
-    """
-    Returns the status of network connectivity via socket connection.
+def connected(host: str = "8.8.8.8",
+              port: int = 53,
+              timeout: float = 10.0) -> bool:
+  """
+  Return the status of network connection via built-in sockets.
+  It is a non-threaded implementation for checking the network.
 
-    Args:
-        host: Host IP address or Hostname of a webserver.
-        port: Port of the webserver.
-        timeout: Request timeout.
+  Args:
+    host: Host IP address or Hostname of a webserver.
+    port: Port of the webserver.
+    timeout: Request timeout.
 
-    Note:
-        8.8.8.8 or google-public-dns-a.google.com, is public DNS for
-        Google which is accessible via TCP port 53.
-    """
-    try:
-        socket.setdefaulttimeout(timeout)
-        socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect((host, port))
-        log.debug("Connection established with the host.")
-        return True
-    except socket.error:
-        log.debug("Connection refused, the host is unreachable.")
-        return False
+  Note:
+    `8.8.8.8` or `google-public-dns-a.google.com` is public DNS
+    for Google which is accessible via TCP port 53.
+  """
+  # TODO(xames3): Build a thread-safe implementation for this function.
+  try:
+    socket.setdefaulttimeout(timeout)
+    socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect((host, port))
+    log.debug("Connection established with the host.")
+    return True
+  except socket.error:
+    log.error("Connection refused, the host is unreachable.")
+    return False
 
 
-# NOTE(xames3): If you want to use now() with lambda, copy this:
-# now = lambda: datetime.now().replace(microsecond=0)
+# NOTE(xames3): If anybody wants to use now() as lambda function,
+# see this: now = lambda: datetime.now().replace(microsecond=0)
 def now() -> datetime:
-    """Returns current time without microseconds."""
-    return datetime.now().replace(microsecond=0)
+  """Return current time without microseconds."""
+  return datetime.now().replace(microsecond=0)
 
 
 def seconds_to_datetime(seconds: Union[float, int]) -> str:
-    """Converts seconds to datetime string."""
-    minutes, seconds = divmod(int(seconds), 60)
-    hours, minutes = divmod(minutes, 60)
-    days, hours = divmod(hours, 24)
-    return f"{days:02d}:{hours:02d}:{minutes:02d}:{seconds:02d}"
+  """Convert seconds to datetime string."""
+  minutes, seconds = divmod(int(seconds), 60)
+  hours, minutes = divmod(minutes, 60)
+  days, hours = divmod(hours, 24)
+  return f"{days:02d}:{hours:02d}:{minutes:02d}:{seconds:02d}"
