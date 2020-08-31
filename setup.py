@@ -47,7 +47,7 @@ _NAME = "kaamiki"
 # This version string is semver compatible & adheres to Semantic
 # Versioning Specification (SemVer) starting with version 0.1.
 # You can read more about it here: https://semver.org/spec/v2.0.0.html
-_VERSION = "1.0.1"
+_VERSION = "1.0.2"
 _VERSION_FLAG = 0
 
 _DOCLINES = __doc__ if __doc__.count("\n") == 0 else __doc__.split("\n")
@@ -89,7 +89,7 @@ setup(
     author="XAMES3",
     author_email="xames3.developer@gmail.com",
     maintainer_email="xames3.kaamiki@gmail.com",
-    # PyPI package information.
+    # PyPI package information
     classifiers=[
         "Development Status :: 4 - Beta",
         "Environment :: MacOS X",
