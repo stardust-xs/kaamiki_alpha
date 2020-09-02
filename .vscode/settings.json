@@ -34,8 +34,8 @@
     },
     "git.autofetch": true,
     "python.pythonPath": "/mnt/hdd/development/universe/venv/bin/python",
-    "python.linting.pylintEnabled": false,
-    "python.linting.pycodestyleEnabled": true,
+    "python.linting.pylintEnabled": true,
+    "python.linting.pycodestyleEnabled": false,
     "python.linting.enabled": true,
     "python.formatting.provider": "autopep8",
     "python.linting.pylintArgs": [
