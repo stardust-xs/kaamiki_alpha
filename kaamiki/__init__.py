@@ -17,7 +17,17 @@
 
 """Check Kaamiki build for runtime errors."""
 
+import json
 import os
+import re
+import socket
+import subprocess
+import sys
+import urllib.request
+from distutils.version import StrictVersion
+from typing import Optional, Tuple
+
+from pkg_resources import parse_version
 
 # Raise an exception if the environment is not correctly configured
 # with platform-specific imports. All attempts to run Kaamiki on an
@@ -38,10 +48,10 @@ if os.name == "nt":
     if missing:
         _missing = ", ".join(missing[:-2] + [" and ".join(missing[-2:])])
         _modules = " ".join(missing)
-        print("ImportError: Cannot import {} module(s).\n"
-              "Kaamiki requires that these module(s) be installed "
-              "in your python environment. You can install them "
-              "with `pip install {}`".format(_missing, _modules))
+        print(f"ImportError: Cannot import {_missing} module(s).\nKaamiki "
+              f"requires that these module(s) be installed in your python "
+              f"environment. You can install them using `pip install "
+              f"{_modules}` command.")
         del missing
         quit()
 
@@ -60,5 +70,86 @@ if os.name == "nt":
         del _PYWIN32_INSTALLED
         quit()
 else:
-    # TODO(xames3): Consider adding checks for Linux and Mac OS builds.
+    # TODO(xames3): Consider adding checks for Linux and MacOS builds.
     pass
+
+
+def _connected(host: str = "8.8.8.8",
+               port: int = 53,
+               timeout: float = 10.0) -> bool:
+    """
+    Returns the status of network connectivity via socket connection.
+
+    Args:
+        host: Host IP address or Hostname of a webserver.
+        port: Port of the webserver.
+        timeout: Request timeout.
+
+    Note:
+        8.8.8.8 or google-public-dns-a.google.com, is public DNS for
+        Google which is accessible via TCP port 53.
+    """
+    try:
+        socket.setdefaulttimeout(timeout)
+        socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect((host, port))
+        return True
+    except socket.error:
+        return False
+
+
+def _extract_details(command: str, parameter: str) -> str:
+    """Extract required details."""
+    return re.findall(f"({parameter.capitalize()}:)(.+)\n",
+                      command)[0][-1].strip()
+
+
+def _check_current(package: str) -> Tuple[str, str]:
+    """Checks current installed version."""
+    cmd = subprocess.run([sys.executable, "-m", "pip", "show", package],
+                         stdout=subprocess.PIPE).stdout.decode("utf-8")
+    return _extract_details(cmd, "name"), _extract_details(cmd, "version")
+
+
+def _check_latest(package: str) -> Optional[str]:
+    """Checks latest available version on PyPI."""
+    url = f"https://pypi.org/pypi/{package}/json"
+    data = json.load(urllib.request.urlopen(url))["releases"].keys()
+    return sorted(data, key=StrictVersion, reverse=True)[0]
+
+
+def _compare_version(package: str = "kaamiki", force: bool = False) -> None:
+    """Compares installed and latest stable version of Kaamiki."""
+    name, current = _check_current(package)
+
+    if _connected:
+        package = name if name != package else package
+        latest = _check_latest(package)
+        latest = latest if latest else current
+
+        if parse_version(current) == parse_version(latest) and force:
+            print(f"You are using the latest version of {package} v{latest}.")
+        elif parse_version(current) < parse_version(latest):
+            print(
+                f"You are using an older version of {package} v{current}.\n"
+                f"However, v{latest} is currently available for download. "
+                f"You should consider upgrading to it with `pip install --"
+                f"upgrade {package}` command."
+            )
+        elif parse_version(current) > parse_version(latest):
+            print(
+                f"You are using the development version of {package} v"
+                f"{current}.\nIf you want to roll back to the stable "
+                f"version, consider downgrading with `pip install "
+                f"{package}` command."
+            )
+        else:
+            return None
+    else:
+        if force:
+            print(
+                f"Internet connection is questionable at the moment. "
+                f"Couldn't check for the latest version of {package}."
+            )
+
+
+_compare_version()
