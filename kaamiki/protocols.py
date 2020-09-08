@@ -20,6 +20,7 @@
 import os
 import random
 import re
+import sys
 import time
 import uuid
 from subprocess import PIPE, Popen
@@ -72,7 +73,7 @@ class BabyMonitorProtocol(object, metaclass=Neo):
                 self.log.error(f"{self._name} cannot load windows imports.")
                 self.log.exception(error)
                 del self
-                quit()
+                sys.exit(0)
         elif os.name == "darwin":
             # TODO(xames3): Consider adding support for MacOS builds.
             self._os = "darwin"
@@ -186,8 +187,9 @@ class BabyMonitorProtocol(object, metaclass=Neo):
             raw = self._uia.top_window()
             # TODO(xames3): This is not the right approach of saving
             # URLs. Add support for fetching url headers correctly.
-            _url = "https://" + raw.child_window(
-                title=self._title, control_type="Edit").get_value()
+            _url = "https://" + \
+                raw.child_window(title=self._title,
+                                 control_type="Edit").get_value()
             _domain = re.match(r"(.*://)?([^/?]+)./*", _url)[0]
             return _url, _domain
         except (pywinauto.findwindows.ElementNotFoundError, comtypes.COMError):
@@ -251,18 +253,21 @@ class BabyMonitorProtocol(object, metaclass=Neo):
                                 url, domain = self._active_url.get(
                                     self._os, self._unknown_os)(program)
                                 try:
-                                    self._csv.write(self._headers,
-                                                    self._window,
-                                                    self._program,
-                                                    self._url,
-                                                    self._domain,
-                                                    started,
-                                                    stopped,
-                                                    seconds_spent,
-                                                    *time_spent)
+                                    self._csv.write(
+                                        self._headers,
+                                        self._window,
+                                        self._program,
+                                        self._url,
+                                        self._domain,
+                                        started,
+                                        stopped,
+                                        seconds_spent,
+                                        *time_spent
+                                    )
                                 except PermissionError:
                                     self.log.error(
-                                        "File is accessed by another program.")
+                                        "File is accessed by another program."
+                                    )
                                 # Restart the timer so that it records
                                 # correct number of seconds that have
                                 # passed.
@@ -277,7 +282,7 @@ class BabyMonitorProtocol(object, metaclass=Neo):
             except KeyboardInterrupt:
                 self.log.warning(f"{self._name} was interrupted.")
                 del self
-                quit()
+                sys.exit(0)
             except Exception as _error:
                 self.log.exception(_error)
             finally:

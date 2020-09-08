@@ -53,7 +53,7 @@ if os.name == "nt":
               f"environment. You can install them using `pip install "
               f"{_modules}` command.")
         del missing
-        quit()
+        sys.exit(0)
 
     try:
         from win32gui import GetForegroundWindow
@@ -68,7 +68,7 @@ if os.name == "nt":
               "running protocols.\nSee https://stackoverflow.com/a/20128310 "
               "for instructions on how to install PyWin32 on your system.")
         del _PYWIN32_INSTALLED
-        quit()
+        sys.exit(0)
 else:
     # TODO(xames3): Consider adding checks for Linux and MacOS builds.
     pass
