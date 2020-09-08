@@ -50,7 +50,7 @@ class Neo(type):
 
     >>> class YourClass(metaclass=Neo):
     ...     pass
-
+    ...
     >>> singleton_obj1 = YourClass()
     >>> singleton_obj2 = YourClass()
     >>> singleton_obj1
@@ -211,6 +211,7 @@ class SilenceOfTheLogs(object):
     ...     5 / 0
     ... except Exception as error:
     ...     log.exception(error)
+    ...
     Sun Aug 23, 2020 ...    ERROR 3571 ...: ZeroDivisionError caused ...
     """
 
@@ -229,11 +230,11 @@ class SilenceOfTheLogs(object):
             backups: Total number of backup.
         """
         try:
-            self._temp = os.path.abspath(sys.modules["__main__"].__file__)
+            self._py = os.path.abspath(sys.modules["__main__"].__file__)
         except AttributeError:
-            self._temp = "kaamiki.py"
+            self._py = "kaamiki.py"
 
-        self._name = name.lower() if name else Path(self._temp.lower()).stem
+        self._name = name.lower() if name else Path(self._py.lower()).stem
         self._name = self._name.replace(" ", "-")
         self._level = level.upper()
         self._size = int(size) if size else 1000000
