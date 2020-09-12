@@ -50,10 +50,10 @@ class BabyMonitorProtocol(object, metaclass=Neo):
     has spent on it while using the computer.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, level: str = "info") -> None:
         """Instantiate class."""
         self._name = "Baby Monitor Protocol"
-        self.log = logger(self._name).log
+        self.log = logger(self._name, level).log
 
         if os.name == "nt":
             try:
