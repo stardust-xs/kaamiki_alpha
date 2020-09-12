@@ -63,6 +63,7 @@ class Neo(type):
     _instances = {}
 
     def __call__(cls, *args, **kwargs):
+        """Callable instance."""
         if cls not in cls._instances:
             cls._instances[cls] = super().__call__(*args, **kwargs)
         return cls._instances[cls]
@@ -70,13 +71,25 @@ class Neo(type):
 
 class ModulePath(object):
     """
-    Resolves module path.
+    Resolve relative path of the logged module.
+
+    This implementation of fetching or resolving relative module path is
+    inspired from SprintBoot, wherein it displays the module which is
+    logging the record.
     """
+
     def __init__(self, path: str) -> None:
+        """
+        Instantiate class.
+        
+        Args:
+            path: Absolute path of the module.
+        """
         self._path = path
 
     @property
     def resolve(self) -> str:
+        """Return relative path of the logged module."""
         delimiter = "kaamiki" if "kaamiki" in self._path else get_python_lib()
         module = self._path.partition(delimiter)[-1]
         return os.path.splitext(module.replace("/" or "\\", "."))[0][1:]
@@ -115,10 +128,9 @@ class LogFormatter(logging.Formatter, metaclass=Neo):
         formatted = logging.Formatter(self._log_format.format(module),
                                       self._timestamp_format).format(record)
 
-        function = record.funcName
-        function = f"in {function}() " if function != "<module>" else ""
-
         if record.exc_text:
+            function = record.funcName
+            function = f"in {function}() " if function != "<module>" else ""
             exc_msg = self._exc_format.format(
                 record.exc_info[1].__class__.__name__,
                 str(record.msg).lower(),
@@ -133,20 +145,49 @@ class LogFormatter(logging.Formatter, metaclass=Neo):
 
 class StreamFormatter(logging.StreamHandler, metaclass=Neo):
     """
-    Stream logs on terminal with singleton backend.
+    Stream colored logs.
 
-    StreamFormatter is a traditional logging stream handler with
-    taste of Singleton design pattern.
+    StreamFormatter is a traditional logging stream handler with some
+    added colors and taste of Singleton design pattern. These colors
+    adapt with respect to the logging levels.
     """
+    # TODO(xames3): Consider adding support to Windows based systems.
+    # See https://gist.github.com/mooware/a1ed40987b6cc9ab9c65 for
+    # correct implementation for Windows machine.
+    _DEFAULT = "\033[0m"
+    _RED = "\033[91m"
+    _GREEN = "\033[92m"
+    _YELLOW = "\033[93m"
+    _CYAN = "\033[96m"
+    _BOLD = "\033[1m"
+
+    _color_levels = {
+        logging.DEBUG: _CYAN,
+        logging.INFO: _GREEN,
+        logging.WARNING: _YELLOW,
+        logging.ERROR: _RED,
+        logging.CRITICAL: _RED,
+    }
 
     def __init__(self) -> None:
         """Instantiate class."""
         super().__init__(sys.stdout)
 
+    @classmethod
+    def _render_color(cls, level: int, record: logging.LogRecord) -> str:
+        """Returns color to render while printing logs."""
+        return cls._color_levels.get(level, cls._DEFAULT) + record.levelname
+
+    def format(self, record: logging.LogRecord) -> str:
+        """Format log level with adaptive color."""
+        _record = logging.StreamHandler.format(self, record)
+        _colored = self._render_color(record.levelno, record) + self._DEFAULT
+        return _record.replace(record.levelname, _colored)
+
 
 class ArchiveHandler(RotatingFileHandler, metaclass=Neo):
     """
-    Backup logs which grow bigger in size.
+    Archive logs which grow in size.
 
     ArchiveHandler is a rotating file handler class which
     creates an archive of the log to rollover once it reaches a
@@ -154,7 +195,7 @@ class ArchiveHandler(RotatingFileHandler, metaclass=Neo):
     size, the file is closed and a new log is silently opened for
     logging.
 
-    This class ensures that the file won't grow indefinitely.
+    This class ensures that the logs won't grow indefinitely.
     """
 
     def __init__(self,
