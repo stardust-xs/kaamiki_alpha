@@ -150,6 +150,3 @@ def _compare_version(package: str = "kaamiki", force: bool = False) -> None:
                 f"Internet connection is questionable at the moment. "
                 f"Couldn't check for the latest version of {package}."
             )
-
-
-_compare_version()
