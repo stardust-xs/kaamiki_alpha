@@ -139,6 +139,11 @@ setup(
     python_requires="~=3.6",
     include_package_data=True,
     packages=find_packages(),
+    entry_points={
+        "console_scripts": [
+            "kaamiki = kaamiki.parser:main",
+        ],
+    },
     platform=["Windows", "Linux", "MacOS"],
 )
 
