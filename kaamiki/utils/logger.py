@@ -46,17 +46,18 @@ class Neo(type):
     implementing singletons in code.
 
     You can instantiate YourClass multiple times yet you would get
-    reference to same object:
+    reference to same object.
 
-    >>> class YourClass(metaclass=Neo):
-    ...     pass
-    ...
-    >>> singleton_obj1 = YourClass()
-    >>> singleton_obj2 = YourClass()
-    >>> singleton_obj1
-    <__main__.YourClass object at 0x7fc8f1948970>
-    >>> singleton_obj2
-    <__main__.YourClass object at 0x7fc8f1948970>
+    Example:
+        >>> class YourClass(metaclass=Neo):
+        ...     pass
+        ...
+        >>> singleton_obj1 = YourClass()
+        >>> singleton_obj2 = YourClass()
+        >>> singleton_obj1
+        <__main__.YourClass object at 0x7fc8f1948970>
+        >>> singleton_obj2
+        <__main__.YourClass object at 0x7fc8f1948970>
     """
     # See https://refactoring.guru/design-patterns/singleton/python/example
     # for a thread-safe implementation.
@@ -246,14 +247,14 @@ class SilenceOfTheLogs(object):
     clean log formatting.
 
     Example:
-    >>> from kaamiki.utils.logger import SilenceOfTheLogs
-    >>> log = SilenceOfTheLogs().log
-    >>> try:
-    ...     5 / 0
-    ... except Exception as error:
-    ...     log.exception(error)
-    ...
-    Sun Aug 23, 2020 ...    ERROR 3571 ...: ZeroDivisionError caused ...
+        >>> from kaamiki.utils.logger import SilenceOfTheLogs
+        >>> log = SilenceOfTheLogs().log
+        >>> try:
+        ...     5 / 0
+        ... except Exception as error:
+        ...     log.exception(error)
+        ...
+        Sun Aug 23, 2020 ... ERROR 357 ...: ZeroDivisionError caused ...
     """
 
     def __init__(self,
