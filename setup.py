@@ -60,8 +60,9 @@ def _use_readme() -> str:
 
 
 def _cook() -> None:
-    """Prepares the required directory structure."""
+    """Prepare the required directory structure while setting up."""
     base = _os.expanduser(f"~/.{_NAME}/")
+
     # Create base directory for caching, logging and storing data of
     # Kaamiki session. This ensures all the data generated or logged
     # by Kaamiki is dumped at same location.
@@ -74,13 +75,10 @@ def _cook() -> None:
 
 
 with open("requirements.txt", "r") as requirements:
-    packages = [package.rstrip() for package in requirements]
-    # Skip downloading packages meant for Windows when running on a
-    # Non Windows system. This ensures proper packages are downloaded
-    # for the respective OS.
     if os.name != "nt":
         skip = ["psutil", "pywin32", "pypywin32", "pywinauto", "win10toast"]
-        packages = [idx for idx in packages if idx not in skip]
+        packages = [idx for idx in requirements if idx.rstrip() not in skip]
+
 
 setup(
     name=_NAME,
