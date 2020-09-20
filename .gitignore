@@ -133,8 +133,7 @@ dmypy.json
 *.bkp
 *.log
 .vscode/
-kaamiki/media/*.psd
-kaamiki/media/*.png
-misc*
+misc/
+tests/
 temp*
 test*
