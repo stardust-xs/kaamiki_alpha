@@ -26,246 +26,240 @@ from typing import Any, List, Tuple
 
 
 class CommandLineParser(argparse.ArgumentParser):
+  """
+  Kaamiki Command Line Parser
+
+  The `CommandLineParser` is a command line utility for using
+  kaamiki's features without writing any code. Python's built
+  in ArgumentParser is great but it blocks a couple of things
+  that could help the user to navigate to the tools with more
+  ease.
+  Hence, the class aims to solve this problem and provide lot
+  more details and decriptions for using each* command.
+  """
+
+  def __init__(self, *args: Any, **kwargs: Any) -> None:
+    """Instantiate class."""
+    self._width = round(os.get_terminal_size().columns / 1.3)
+    self._program = {key: kwargs[key] for key in kwargs}
+    # self._commands and self._options need to be initialized
+    # first before calling `__init__()` of the inherited base
+    # class, as the `argparse.ArgumentParser.__init__()` sets
+    # `add_help=True` by default which allows execution of
+    # add_argument("-h", "--help").
+    self._commands = []
+    self._options = []
+
+    super().__init__(*args, **kwargs)
+
+  def add_argument(self, *args: Any, **kwargs: Any) -> None:
     """
-    CommandLineParser
+    Add arguments as inputs for parsing.
 
-    As the name speaks for itself, `CommandLineParser` is a command line
-    utility for accessing Kaamiki's features without writing any custom
-    code. This parser is written to minimize the efforts of the user
-    while interacting with Kaamiki.
+    This method defines the collection of input arguments.
+    These arguments could be positional, optional or could
+    be argument `values` passed to a method.
 
-    Python's built-in ArgumentParser is great but it restricts a some
-    things that could help the user to navigate more easily. This class
-    is written to solve that problem thereby providing more details and
-    decriptions for using each* command.
+    Example:
+      xames3@kaamiki:~$ kaamiki arg_1 --arg_2 ...
     """
+    super().add_argument(*args, **kwargs)
+    argument = {key: kwargs[key] for key in kwargs}
+    # Prepare list of all command arguments i.e arguments with
+    # only one name and not starting with `-` and are provided
+    # as positional arguments to a method (values provided to
+    # the `dest=` argument).
+    if len(args) == 0 or (len(args) == 1 and
+                          isinstance(args[0], str) and not
+                          args[0].startswith("-")):
+      argument["name"] = args[0] if len(args) > 0 else argument["dest"]
+      self._commands.append(argument)
+      return None
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        """Instantiate class."""
-        # self._commands and self._options need to be initialized
-        # before calling __init__() of the inherited base class, as
-        # argparse.ArgumentParser.__init__() sets `add_help=True` by
-        # default which allows call of add_argument("-h", "--help").
-        self._commands = []
-        self._options = []
+    # Prepare list of optional arguments i.e arguments with one or
+    # more flags starting with `-` provided as positional argument
+    # to a method.
+    argument["flags"] = [arg for arg in args]
+    self._options.append(argument)
 
-        self._width = round(os.get_terminal_size().columns / 1.3)
-        self._program = {key: kwargs[key] for key in kwargs}
+  def format_usage(self) -> str:
+    """
+    Format helpful usage text.
 
-        super().__init__(*args, **kwargs)
+    It defines the usage block and provides helpful description
+    along with the syntax of using the particular command.
 
-    def add_argument(self, *args: Any, **kwargs: Any) -> None:
-        """
-        Add arguments as inputs for parsing.
-        
-        This method defines the collection of input arguments. These
-        arguments could be the positional, optional or could be argument
-        passed to a method.
+    Note:
+      Not every command has usage information.
+    """
+    prefix = "Usage:\n  "
+    # Use the below block if `usage` is provided.
+    if "usage" in self._program:
+      wrapper = _wrapper(self._width)
+      wrapper.initial_indent = prefix
+      wrapper.subsequent_indent = len(prefix) * " "
+      if self._program["usage"] == "" or str.isspace(self._program["usage"]):
+        return wrapper.fill("No usage information available.")
+      return wrapper.fill(self._program["usage"])
 
-        Example:
-            xames3@kaamiki:~$ kaamiki arg_1 --arg_2 ...
-        """
-        super().add_argument(*args, **kwargs)
-        argument = {key: kwargs[key] for key in kwargs}
-        # Prepare list of all command arguments i.e arguments with
-        # only one name and not starting with `-` and are provided
-        # as positional arguments to a method (values provided to
-        # the `dest=` argument).
-        if len(args) == 0 or \
-           (len(args) == 1 and isinstance(args[0], str) and not
-                args[0].startswith("-")):
-            argument["name"] = args[0] if len(args) > 0 else argument["dest"]
-            self._commands.append(argument)
-            return None
+    if "prog" in self._program and \
+            self._program["prog"] != "" and not \
+            str.isspace(self._program["prog"]):
+      prog = self._program["prog"]
+    else:
+      prog = os.path.basename(sys.argv[0])
 
-        # Prepare list of optional arguments i.e arguments with one or
-        # more flags starting with `-` provided as positional argument
-        # to a method.
-        argument["flags"] = [arg for arg in args]
-        self._options.append(argument)
+    usage = []
+    usage.append(prefix)
+    for command in self._commands[:4]:
+      if "metavar" in command:
+        usage.append(f"{prog} {command['metavar']} [options] ...")
+      else:
+        usage.append(f"{prog} {command['name']} [options] ...")
+      usage.append("\n  ")
 
-    def format_usage(self) -> str:
-        """
-        Format helpful usage text.
-        
-        It defines the usage block and provides helpful description and
-        perhaps the syntax of using a particular command.
+    return "".join(usage[:-1])
 
-        Note:
-            Not every command has usage information.
-        """
-        prefix = "Usage:\n  "
-        # Use the below block if `usage` is provided.
-        if "usage" in self._program:
-            wrapper = _wrapper(self._width)
-            wrapper.initial_indent = prefix
-            wrapper.subsequent_indent = len(prefix) * " "
-            if self._program["usage"] == "" or \
-                    str.isspace(self._program["usage"]):
-                return wrapper.fill("No usage information available.")
-            return wrapper.fill(self._program["usage"])
+  def format_help(self) -> Tuple[List[str], ...]:
+    """
+    Return blocks of codes to use while displaying help text.
 
-        if "prog" in self._program and self._program["prog"] != "" and not \
-                str.isspace(self._program["prog"]):
-            prog = self._program["prog"]
+    It returns modular (tuple od strings) snippets of help text
+    that are used for displaying the help.
+    """
+    description, commands, options, epilog = [], [], [], []
+    args_len = desc_len = 0
+    # Wrap epilog and the command description into a paragraph if
+    # the string exceeds a set width. This ensures consistency in
+    # the informative help texts.
+    epilog_wrapper = _wrapper(self._width, replace_whitespace=False)
+    desc_wrapper = _wrapper(self._width, replace_whitespace=False)
+    desc_wrapper.subsequent_indent = 2 * " "
+    # Add description if provided.
+    if "description" in self._program and \
+            self._program["description"] != "" and not \
+            str.isspace(self._program["description"]):
+      description.append("\nDescription:\n  ")
+      description.extend(desc_wrapper.wrap(self._program["description"]))
+      description.append("\n")
+
+    for command in self._commands:
+      if "metavar" in command:
+        command["left"] = command["metavar"]
+      else:
+        command["left"] = command["name"]
+
+    for option in self._options:
+      if "action" in option and (option["action"] == "store_true" or
+                                 option["action"] == "store_false"):
+        option["left"] = str.join(", ", option["flags"])
+      else:
+        _flags = []
+        for item in option["flags"]:
+          if "metavar" in option:
+            _flags.append(f"{item} <{option['metavar']}>")
+          elif "dest" in option:
+            _flags.append(f"{item} {option['dest'].upper()}")
+          else:
+            _flags.append(item)
+        option["left"] = str.join(", ", _flags)
+
+    for argument in self._commands + self._options:
+      if "help" in argument and argument["help"] != "" and not \
+              str.isspace(argument["help"]) and \
+              "default" in argument and argument["default"] != \
+              argparse.SUPPRESS:
+        if isinstance(argument["default"], str):
+          argument["right"] = argument["help"] + " " + \
+              f"(Default: {argument['default']})"
         else:
-            prog = os.path.basename(sys.argv[0])
+          argument["right"] = argument["help"] + " " + \
+              f"(Default: {argument['default']})"
+      elif "help" in argument and argument["help"] != "" and not \
+              str.isspace(argument["help"]):
+        argument["right"] = argument["help"]
+      elif "default" in argument and argument["default"] != argparse.SUPPRESS:
+        if isinstance(argument["default"], str):
+          argument["right"] = f"Default: '{argument['default']}'"
+        else:
+          argument["right"] = f"Default: {str(argument['default'])}"
+      else:
+        argument["right"] = "No description available."
 
-        usage = []
-        usage.append(prefix)
-        for command in self._commands[:4]:
-            if "metavar" in command:
-                usage.append(f"{prog} {command['metavar']} [options] ...")
-            else:
-                usage.append(f"{prog} {command['name']} [options] ...")
-            usage.append("\n  ")
+      args_len = max(args_len, len(argument["left"]))
+      desc_len = max(desc_len, len(argument["right"]))
 
-        return "".join(usage[:-1])
+    # Calculate maximum width required for displaying the args and
+    # their respective descriptions. We are limiting the width of
+    # args to maximum of self._width / 2. We use max() to prevent
+    # negative values.
+    args_width = args_len
+    desc_width = max(0, self._width - args_width - 4)
+    if (args_width > int(self._width / 2) - 4):
+      args_width = max(0, int(self._width / 2) - 4)
+      desc_width = int(self._width / 2)
 
-    def format_help(self) -> Tuple[List[str], ...]:
-        """
-        Return blocks of code to use while displaying help text.
+    # Define template with two leading spaces and two trailing
+    # spaces (spaces between args and description).
+    template = "  %-" + str(args_width) + "s  %s"
 
-        It returns modular (tuple of) snippets of help text that is used
-        for displaying the help. The modularity enables flexibility for
-        displaying the sequence of help text.
-        """
-        description, commands, options, epilog = [], [], [], []
-        args_len = desc_len = 0
-        # Wrap epilog and the command description into a paragraph if
-        # the string exceeds a set width. This ensures consistency in
-        # the informative help texts.
-        epilog_wrapper = _wrapper(self._width, replace_whitespace=False)
-        desc_wrapper = _wrapper(self._width, replace_whitespace=False)
-        desc_wrapper.subsequent_indent = 2 * " "
-        # Add description if provided.
-        if "description" in self._program and \
-                self._program["description"] != "" and not \
-                str.isspace(self._program["description"]):
-            description.append("\nDescription:\n  ")
-            description.extend(desc_wrapper.wrap(self._program["description"]))
-            description.append("\n")
+    # Wrap text for args and description parts by splitting the text
+    # into separate lines.
+    args_wrapper = _wrapper(args_width)
+    desc_wrapper = _wrapper(desc_width)
+    for argument in self._commands + self._options:
+      argument["left"] = args_wrapper.wrap(argument["left"])
+      argument["right"] = desc_wrapper.wrap(argument["right"])
 
-        for command in self._commands:
-            if "metavar" in command:
-                command["left"] = command["metavar"]
-            else:
-                command["left"] = command["name"]
+    # Add command arguments.
+    if len(self._commands) > 0:
+      commands.append("\nCommands:\n")
+      for command in self._commands:
+        for idx in range(max(len(command["left"]), len(command["right"]))):
+          if idx < len(command["left"]):
+            left = command["left"][idx]
+          else:
+            left = ""
+          if idx < len(command["right"]):
+            right = command["right"][idx]
+          else:
+            right = ""
+          commands.append(template % (left, right))
+          commands.append("\n")
 
-        for option in self._options:
-            if "action" in option and (option["action"] == "store_true" or
-                                       option["action"] == "store_false"):
-                option["left"] = str.join(", ", option["flags"])
-            else:
-                _flags = []
-                for item in option["flags"]:
-                    if "metavar" in option:
-                        _flags.append(f"{item} <{option['metavar']}>")
-                    elif "dest" in option:
-                        _flags.append(f"{item} {option['dest'].upper()}")
-                    else:
-                        _flags.append(item)
-                option["left"] = str.join(", ", _flags)
+    # Add option arguments.
+    if len(self._options) > 0:
+      options.append("\nOptions:\n")
+      for option in self._options:
+        for idx in range(max(len(option["left"]), len(option["right"]))):
+          if idx < len(option["left"]):
+            left = option["left"][idx]
+          else:
+            left = ""
+          if idx < len(option["right"]):
+            right = option["right"][idx]
+          else:
+            right = ""
+          options.append(template % (left, right))
+          options.append("\n")
 
-        for argument in self._commands + self._options:
-            if "help" in argument and argument["help"] != "" and not \
-                    str.isspace(argument["help"]) and \
-                    "default" in argument and argument["default"] != \
-                    argparse.SUPPRESS:
-                if isinstance(argument["default"], str):
-                    argument["right"] = argument["help"] + " " + \
-                        f"(Default: {argument['default']})"
-                else:
-                    argument["right"] = argument["help"] + " " + \
-                        f"(Default: {argument['default']})"
-            elif "help" in argument and argument["help"] != "" and not \
-                    str.isspace(argument["help"]):
-                argument["right"] = argument["help"]
-            elif "default" in argument and \
-                    argument["default"] != argparse.SUPPRESS:
-                if isinstance(argument["default"], str):
-                    argument["right"] = f"Default: '{argument['default']}'"
-                else:
-                    argument["right"] = f"Default: {str(argument['default'])}"
-            else:
-                argument["right"] = "No description available."
+    # Add epilog if provided.
+    if "epilog" in self._program and self._program["epilog"] != "" and not \
+            str.isspace(self._program["epilog"]):
+      epilog.append("\n")
+      epilog.extend(epilog_wrapper.wrap(self._program["epilog"]))
+      epilog.append("\n")
 
-            args_len = max(args_len, len(argument["left"]))
-            desc_len = max(desc_len, len(argument["right"]))
+    return description, commands, options, epilog
 
-        # Calculate maximum width required for displaying the args and
-        # their respective descriptions. We are limiting the width of
-        # args to maximum of self._width / 2. We use max() to prevent
-        # negative values.
-        args_width = args_len
-        desc_width = max(0, self._width - args_width - 4)
-        if (args_width > int(self._width / 2) - 4):
-            args_width = max(0, int(self._width / 2) - 4)
-            desc_width = int(self._width / 2)
+  def print_help(self) -> None:
+    """Print help to sys.stdout."""
+    sys.stdout.write(f"\n{self.format_usage()}\n")
+    sys.stdout.write("".join(list(itertools.chain(*self.format_help()))))
+    sys.stdout.flush()
 
-        # Define template with two leading spaces and two trailing
-        # spaces (spaces between args and description).
-        template = "  %-" + str(args_width) + "s  %s"
-
-        # Wrap text for args and description parts by splitting the text
-        # into separate lines.
-        args_wrapper = _wrapper(args_width)
-        desc_wrapper = _wrapper(desc_width)
-        for argument in self._commands + self._options:
-            argument["left"] = args_wrapper.wrap(argument["left"])
-            argument["right"] = desc_wrapper.wrap(argument["right"])
-
-        # Add command arguments.
-        if len(self._commands) > 0:
-            commands.append("\nCommands:\n")
-            for command in self._commands:
-                for idx in range(max(len(command["left"]),
-                                     len(command["right"]))):
-                    if idx < len(command["left"]):
-                        left = command["left"][idx]
-                    else:
-                        left = ""
-                    if idx < len(command["right"]):
-                        right = command["right"][idx]
-                    else:
-                        right = ""
-                    commands.append(template % (left, right))
-                    commands.append("\n")
-
-        # Add option arguments.
-        if len(self._options) > 0:
-            options.append("\nOptions:\n")
-            for option in self._options:
-                for idx in range(max(len(option["left"]),
-                                     len(option["right"]))):
-                    if idx < len(option["left"]):
-                        left = option["left"][idx]
-                    else:
-                        left = ""
-                    if idx < len(option["right"]):
-                        right = option["right"][idx]
-                    else:
-                        right = ""
-                    options.append(template % (left, right))
-                    options.append("\n")
-
-        # Add epilog if provided.
-        if "epilog" in self._program and self._program["epilog"] != "" and \
-                not str.isspace(self._program["epilog"]):
-            epilog.append("\n")
-            epilog.extend(epilog_wrapper.wrap(self._program["epilog"]))
-            epilog.append("\n")
-
-        return description, commands, options, epilog
-
-    def print_help(self) -> None:
-        """Print help to sys.stdout."""
-        sys.stdout.write(f"\n{self.format_usage()}\n")
-        sys.stdout.write("".join(list(itertools.chain(*self.format_help()))))
-        sys.stdout.flush()
-
-    def error(self) -> None:
-        """Print hint to stderr and exit."""
-        sys.stderr.write(f"\n{self.format_usage()}\n")
-        sys.stderr.write("".join(list(itertools.chain(*self.format_help()))))
-        sys.exit(1)
+  def error(self) -> None:
+    """Print hint to stderr and exit."""
+    sys.stderr.write(f"\n{self.format_usage()}\n")
+    sys.stderr.write("".join(list(itertools.chain(*self.format_help()))))
+    sys.exit(1)
