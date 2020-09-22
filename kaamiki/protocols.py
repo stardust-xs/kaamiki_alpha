@@ -256,7 +256,8 @@ class BabyMonitorProtocol(object, metaclass=Neo):
                                 self._window,
                                 self._program,
                                 self._url,
-                                self._domain, started,
+                                self._domain,
+                                started,
                                 stopped,
                                 seconds_spent,
                                 *time_spent)
