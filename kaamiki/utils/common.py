@@ -134,7 +134,8 @@ def now() -> datetime:
 
 def seconds_to_datetime(seconds: Union[float, int]) -> str:
   """Convert seconds to datetime string."""
-  minutes, seconds = divmod(int(seconds), 60)
-  hours, minutes = divmod(minutes, 60)
-  days, hours = divmod(hours, 24)
-  return f"{days:02d}:{hours:02d}:{minutes:02d}:{seconds:02d}"
+  # NOTE(xames3): Inspired from `timedelta` class of datetime module.
+  mm, ss = divmod(int(seconds), 60)
+  hh, mm = divmod(mm, 60)
+  dd, hh = divmod(hh, 24)
+  return f"{dd:02d}:{hh:02d}:{mm:02d}:{ss:02d}"
