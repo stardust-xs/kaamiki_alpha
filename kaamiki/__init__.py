@@ -1,4 +1,4 @@
-# Copyright (c) 2020 Kaamiki Developers. All rights reserved.
+# Copyright (c) 2020 Kaamiki Development Team. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -57,9 +57,9 @@ if os.name == "nt":
     sys.exit(1)
 
   try:
+    from win32api import GetFileVersionInfo
     from win32gui import GetForegroundWindow
     from win32process import GetWindowThreadProcessId
-    from win32api import GetFileVersionInfo
     _PYWIN32_INSTALLED = True
   except ImportError:
     _PYWIN32_INSTALLED = False
